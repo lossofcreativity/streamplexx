@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Streamplex - Live Streaming Platform</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+  <style>
+    :root {
+      --primary: #9147ff;
+      --primary-dark: #772ce8;
+      --dark: #0e0e10;
+      --dark-light: #18181b;
+      --light-text: #efeff1;
+      --gray-text: #adadb8;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    
+    body {
+      background-color: var(--dark);
+      color: var(--light-text);
+    }
+    
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: var(--dark);
+      padding: 10px 20px;
+      height: 50px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      font-weight: bold;
+      font-size: 24px;
+      color: var(--light-text);
+    }
+    
+    .logo span {
+      color: var(--primary);
+      margin-right: 5px;
+    }
+    
+    .search-container {
+      display: flex;
+      flex: 1;
+      max-width: 400px;
+      margin: 0 20px;
+    }
+    
+    .search-container input {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 8px 0 0 8px;
+      border: none;
+      background-color: rgba(255, 255, 255, 0.15);
+      color: var(--light-text);
+    }
+    
+    .search-container button {
+      background-color: rgba(255, 255, 255, 0.2);
+      border: none;
+      border-radius: 0 8px 8px 0;
+      padding: 8px 12px;
+      color: var(--light-text);
+      cursor: pointer;
+    }
+    
+    .nav-buttons {
+      display: flex;
+      align-items: center;
+    }
+    
+    .nav-buttons a {
+      margin-left: 20px;
+      color: var(--light-text);
+      text-decoration: none;
+    }
+    
+    .btn {
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+    }
+    
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+    }
+    
+    .container {
+      display: flex;
+      height: calc(100vh - 50px);
+    }
+    
+    .sidebar {
+      width: 240px;
+      background-color: var(--dark-light);
+      overflow-y: auto;
+      padding: 10px 0;
+    }
+    
+    .sidebar-section {
+      padding: 10px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .sidebar-section h3 {
+      font-size: 14px;
+      color: var(--gray-text);
+      margin-bottom: 10px;
+    }
+    
+    .channel {
+      display: flex;
+      align-items: center;
+      padding: 8px 0;
+      cursor: pointer;
+    }
+    
+    .channel:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+    
+    .channel-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      margin-right: 10px;
+      background-color: #555;
+      overflow: hidden;
+    }
+    
+    .channel-info {
+      flex: 1;
+    }
+    
+    .channel-name {
+      font-size: 14px;
+      font-weight: bold;
+    }
+    
+    .channel-game {
+      font-size: 12px;
+      color: var(--gray-text);
+    }
+    
+    .channel-viewers {
+      font-size: 12px;
+      color: var(--gray-text);
+    }
+    
+    .main-content {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    
+    .section-title {
+      margin-bottom: 15px;
+    }
+    
+    .stream-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 15px;
+    }
+    
+    .stream-card {
+      border-radius: 8px;
+      overflow: hidden;
+      transition: transform 0.2s;
+      cursor: pointer;
+    }
+    
+    .stream-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .stream-thumbnail {
+      position: relative;
+      width: 100%;
+      height: 0;
+      padding-bottom: 56.25%; /* 16:9 aspect ratio */
+      background-color: #444;
+      overflow: hidden;
+    }
+    
+    .stream-thumbnail img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .live-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background-color: red;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    
+    .viewer-count {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    
+    .stream-info {
+      padding: 10px;
+    }
+    
+    .stream-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .stream-user {
+      font-size: 14px;
+      color: var(--gray-text);
+      margin-bottom: 5px;
+    }
+    
+    .stream-game {
+      font-size: 14px;
+      color: var(--gray-text);
+    }
+    
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      margin-top: 5px;
+    }
+    
+    .tag {
+      background-color: rgba(255, 255, 255, 0.15);
+      color: var(--gray-text);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 12px;
+      margin-right: 5px;
+      margin-bottom: 5px;
+    }
+    
+    /* Login Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .modal-content {
+      background-color: var(--dark-light);
+      border-radius: 8px;
+      width: 400px;
+      padding: 20px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .close {
+      font-size: 24px;
+      cursor: pointer;
+      color: var(--gray-text);
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background-color: rgba(255, 255, 255, 0.1);
+      color: var(--light-text);
+    }
+    
+    .form-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+    }
+    
+    .form-footer a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+    
+    /* User Profile Dropdown */
+    .user-profile {
+      position: relative;
+      cursor: pointer;
+    }
+    
+    .profile-img {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background-color: #555;
+    }
+    
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 40px;
+      background-color: var(--dark-light);
+      border-radius: 4px;
+      width: 200px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+      z-index: 100;
+    }
+    
+    .dropdown-menu a {
+      display: block;
+      padding: 10px 15px;
+      color: var(--light-text);
+      text-decoration: none;
+    }
+    
+    .dropdown-menu a:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <span>S</span>treamplex
+    </div>
+    
+    <div class="search-container">
+      <input type="text" placeholder="Search...">
+      <button><i class="fas fa-search"></i></button>
+    </div>
+    
+    <div class="nav-buttons">
+      <a href="#"><i class="fas fa-crown"></i></a>
+      <a href="#"><i class="fas fa-inbox"></i></a>
+      <a href="#"><i class="fas fa-comment-alt"></i></a>
+      <a href="#" id="loginBtn" class="btn btn-primary">Log In</a>
+      <!-- This will show after login -->
+      <div class="user-profile" style="display: none;">
+        <div class="profile-img"></div>
+        <div class="dropdown-menu">
+          <a href="#"><i class="fas fa-user"></i> Channel</a>
+          <a href="#"><i class="fas fa-video"></i> Video Producer</a>
+          <a href="#"><i class="fas fa-cog"></i> Settings</a>
+          <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Log Out</a>
+        </div>
+      </div>
+    </div>
+  </header>
+  
+  <!-- Main Container -->
+  <div class="container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <h3>RECOMMENDED CHANNELS</h3>
+        <div class="channel">
+          <div class="channel-avatar"></div>
+          <div class="channel-info">
+            <div class="channel-name">StreamerGuy123</div>
+            <div class="channel-game">Fortnite</div>
+          </div>
+          <div class="channel-viewers">12.5K</div>
+        </div>
+        <div class="channel">
+          <div class="channel-avatar"></div>
+          <div class="channel-info">
+            <div class="channel-name">ProGamer</div>
+            <div class="channel-game">League of Legends</div>
+          </div>
+          <div class="channel-viewers">8.2K</div>
+        </div>
+        <div class="channel">
+          <div class="channel-avatar"></div>
+          <div class="channel-info">
+            <div class="channel-name">CasualStreamer</div>
+            <div class="channel-game">Just Chatting</div>
+          </div>
+          <div class="channel-viewers">3.7K</div>
+        </div>
+      </div>
+      
+      <div class="sidebar-section">
+        <h3>FOLLOWED CHANNELS</h3>
+        <div class="channel">
+          <div class="channel-avatar"></div>
+          <div class="channel-info">
+            <div class="channel-name">GameMaster</div>
+            <div class="channel-game">Minecraft</div>
+          </div>
+          <div class="channel-viewers">5.1K</div>
+        </div>
+        <div class="channel">
+          <div class="channel-avatar"></div>
+          <div class="channel-info">
+            <div class="channel-name">SpeedRunner</div>
+            <div class="channel-game">Dark Souls</div>
+          </div>
+          <div class="channel-viewers">1.8K</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+      <h2 class="section-title">Recommended Streams</h2>
+      <div class="stream-grid">
+        <!-- Stream Card 1 -->
+        <div class="stream-card">
+          <div class="stream-thumbnail">
+            <img src="/api/placeholder/300/169" alt="stream thumbnail">
+            <div class="live-badge">LIVE</div>
+            <div class="viewer-count">15.2K viewers</div>
+          </div>
+          <div class="stream-info">
+            <div class="stream-title">Epic gameplay session with followers!</div>
+            <div class="stream-user">StreamerGuy123</div>
+            <div class="stream-game">Fortnite</div>
+            <div class="tags">
+              <div class="tag">English</div>
+              <div class="tag">FPS</div>
+              <div class="tag">Competitive</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Stream Card 2 -->
+        <div class="stream-card">
+          <div class="stream-thumbnail">
+            <img src="/api/placeholder/300/169" alt="stream thumbnail">
+            <div class="live-badge">LIVE</div>
+            <div class="viewer-count">8.7K viewers</div>
+          </div>
+          <div class="stream-info">
+            <div class="stream-title">Ranked matches with pro team</div>
+            <div class="stream-user">ProGamer</div>
+            <div class="stream-game">League of Legends</div>
+            <div class="tags">
+              <div class="tag">English</div>
+              <div class="tag">MOBA</div>
+              <div class="tag">Esports</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Stream Card 3 -->
+        <div class="stream-card">
+          <div class="stream-thumbnail">
+            <img src="/api/placeholder/300/169" alt="stream thumbnail">
+            <div class="live-badge">LIVE</div>
+            <div class="viewer-count">4.3K viewers</div>
+          </div>
+          <div class="stream-info">
+            <div class="stream-title">Chatting with viewers and playing some games</div>
+            <div class="stream-user">CasualStreamer</div>
+            <div class="stream-game">Just Chatting</div>
+            <div class="tags">
+              <div class="tag">English</div>
+              <div class="tag">IRL</div>
+              <div class="tag">Casual</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Stream Card 4 -->
+        <div class="stream-card">
+          <div class="stream-thumbnail">
+            <img src="/api/placeholder/300/169" alt="stream thumbnail">
+            <div class="live-badge">LIVE</div>
+            <div class="viewer-count">5.6K viewers</div>
+          </div>
+          <div class="stream-info">
+            <div class="stream-title">Building a massive city with subscribers</div>
+            <div class="stream-user">GameMaster</div>
+            <div class="stream-game">Minecraft</div>
+            <div class="tags">
+              <div class="tag">English</div>
+              <div class="tag">Creative</div>
+              <div class="tag">Building</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Stream Card 5 -->
+        <div class="stream-card">
+          <div class="stream-thumbnail">
+            <img src="/api/placeholder/300/169" alt="stream thumbnail">
+            <div class="live-badge">LIVE</div>
+            <div class="viewer-count">2.1K viewers</div>
+          </div>
+          <div class="stream-info">
+            <div class="stream-title">World record attempts - All bosses</div>
+            <div class="stream-user">SpeedRunner</div>
+            <div class="stream-game">Dark Souls</div>
+            <div class="tags">
+              <div class="tag">English</div>
+              <div class="tag">Speedrun</div>
+              <div class="tag">Challenge</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Stream Card 6 -->
+        <div class="stream-card">
+          <div class="stream-thumbnail">
+            <img src="/api/placeholder/300/169" alt="stream thumbnail">
+            <div class="live-badge">LIVE</div>
+            <div class="viewer-count">1.8K viewers</div>
+          </div>
+          <div class="stream-info">
+            <div class="stream-title">Late night chill stream with music</div>
+            <div class="stream-user">ChillVibes</div>
+            <div class="stream-game">Music</div>
+            <div class="tags">
+              <div class="tag">English</div>
+              <div class="tag">Music</div>
+              <div class="tag">Relaxing</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Login Modal -->
+  <div id="loginModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Log in to Streamplex</h2>
+        <span class="close">&times;</span>
+      </div>
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Log In</button>
+        <div class="form-footer">
+          <a href="#">Forgot Password?</a>
+          <a href="#">Sign Up</a>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- JavaScript -->
+  <script>
+    // DOM Elements
+    const loginBtn = document.getElementById('loginBtn');
+    const loginModal = document.getElementById('loginModal');
+    const closeBtn = document.querySelector('.close');
+    const loginForm = document.getElementById('loginForm');
+    const userProfile = document.querySelector('.user-profile');
+    const logoutBtn = document.getElementById('logoutBtn');
+    
+    // Show login modal
+    loginBtn.addEventListener('click', function() {
+      loginModal.style.display = 'flex';
+    });
+    
+    // Close login modal
+    closeBtn.addEventListener('click', function() {
+      loginModal.style.display = 'none';
+    });
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+      if (event.target == loginModal) {
+        loginModal.style.display = 'none';
+      }
+    });
+    
+    // Form submission (simulated login)
+    loginForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // Get form values
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      
+      // This would typically be a fetch/AJAX request to a PHP backend
+      // For demo purposes, we'll just simulate a successful login
+      simulateLogin(username, password);
+    });
+    
+    // Toggle dropdown menu for user profile
+    document.querySelector('.user-profile').addEventListener('click', function(e) {
+      const dropdown = this.querySelector('.dropdown-menu');
+      if (dropdown.style.display === 'block') {
+        dropdown.style.display = 'none';
+      } else {
+        dropdown.style.display = 'block';
+      }
+      e.stopPropagation();
+    });
+    
+    // Close dropdown when clicking elsewhere
+    document.addEventListener('click', function() {
+      const dropdown = document.querySelector('.dropdown-menu');
+      if (dropdown) {
+        dropdown.style.display = 'none';
+      }
+    });
+    
+    // Logout functionality
+    logoutBtn.addEventListener('click', function() {
+      // This would typically involve a server request to destroy the session
+      // For demo purposes, we'll just simulate logout
+      simulateLogout();
+    });
+    
+    // Simulate login (front-end only)
+    function simulateLogin(username, password) {
+      // In a real app, this would be an AJAX call to a PHP script like:
+      /*
+      fetch('login.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // User logged in successfully
+          localStorage.setItem('user', JSON.stringify(data.user));
+          updateUIAfterLogin(data.user);
+        } else {
+          // Login failed
+          alert(data.message || 'Login failed');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred during login');
+      });
+      */
+      
+      // For demo purposes, we'll simulate successful login
+      const user = { username: username, avatar: null };
+      localStorage.setItem('user', JSON.stringify(user));
+      updateUIAfterLogin(user);
+      
+      // Close the modal
+      loginModal.style.display = 'none';
+    }
+    
+    // Simulate logout (front-end only)
+    function simulateLogout() {
+      // In a real app, this would involve a server request:
+      /*
+      fetch('logout.php', {
+        method: 'POST',
+        credentials: 'include'
+      })
+      .then(() => {
+        localStorage.removeItem('user');
+        updateUIAfterLogout();
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+      */
+      
+      // For demo purposes, just clear localStorage
+      localStorage.removeItem('user');
+      updateUIAfterLogout();
+    }
+    
+    // Update UI after login
+    function updateUIAfterLogin(user) {
+      loginBtn.style.display = 'none';
+      userProfile.style.display = 'block';
+    }
+    
+    // Update UI after logout
+    function updateUIAfterLogout() {
+      loginBtn.style.display = 'block';
+      userProfile.style.display = 'none';
+    }
+    
+    // Check if user is logged in on page load
+    window.addEventListener('DOMContentLoaded', function() {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (user) {
+        updateUIAfterLogin(user);
+      }
+    });
+    
+    // This is where PHP backend code would typically handle session management, login/logout, database operations, etc.
+    // Since Netlify doesn't support PHP, here's an example of what the PHP files would look like:
+    
+    /*
+    // login.php (Server-side code)
+    <?php
+    session_start();
+    
+    // Get POST data
+    $username = $_POST['username'] ?? '';
+    $password = $_POST['password'] ?? '';
+    
+    // Connect to database
+    $conn = new mysqli('localhost', 'db_user', 'db_password', 'streamplex_db');
+    
+    // Check connection
+    if ($conn->connect_error) {
+        die(json_encode(['success' => false, 'message' => 'Database connection failed']));
+    }
+    
+    // Prepare statement to prevent SQL injection
+    $stmt = $conn->prepare("SELECT id, username, password_hash FROM users WHERE username = ?");
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows === 1) {
+        $user = $result->fetch_assoc();
+        
+        // Verify password
+        if (password_verify($password, $user['password_hash'])) {
+            // Password is correct, start a session
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['username'] = $user['username'];
+            
+            // Return success
+            echo json_encode([
+                'success' => true,
+                'user' => [
+                    'id' => $user['id'],
+                    'username' => $user['username']
+                ]
+            ]);
+        } else {
+            // Password is incorrect
+            echo json_encode(['success' => false, 'message' => 'Invalid username or password']);
+        }
+    } else {
+        // User not found
+        echo json_encode(['success' => false, 'message' => 'Invalid username or password']);
+    }
+    
+    $stmt->close();
+    $conn->close();
+    ?>
+    
+    // logout.php (Server-side code)
+    <?php
+    session_start();
+    
+    // Unset all session variables
+    $_SESSION = [];
+    
+    // Destroy the session
+    session_destroy();
+    
+    // Return success
+    echo json_encode(['success' => true]);
+    ?>
+    
+    // get_streams.php (Server-side code for fetching streams)
+    <?php
+    session_start();
+    
+    // Connect to database
+    $conn = new mysqli('localhost', 'db_user', 'db_password', 'streamplex_db');
+    
+    // Check connection
+    if ($conn->connect_error) {
+        die(json_encode(['success' => false, 'message' => 'Database connection failed']));
+    }
+    
+    // Get streams
+    $sql = "SELECT s.id, s.title, s.viewer_count, s.thumbnail_url, 
+                 u.username, u.display_name, g.name as game_name 
+            FROM streams s
+            JOIN users u ON s.user_id = u.id
+            JOIN games g ON s.game_id = g.id
+            WHERE s.is_live = 1
+            ORDER BY s.viewer_count DESC
+            LIMIT 20";
+            
+    $result = $conn->query($sql);
+    $streams = [];
+    
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            // Get tags for this stream
+            $tag_sql = "SELECT t.name FROM stream_tags st
+                      JOIN tags t ON st.tag_id = t.id
+                      WHERE st.stream_id = ?";
+            $tag_stmt = $conn->prepare($tag_sql);
+            $tag_stmt->bind_param("i", $row['id']);
+            $tag_stmt->execute();
+            $tag_result = $tag_stmt->get_result();
+            
+            $tags = [];
+            while ($tag = $tag_result->fetch_assoc()) {
+                $tags[] = $tag['name'];
+            }
+            
+            $row['tags'] = $tags;
+            $streams[] = $row;
+            
+            $tag_stmt->close();
+        }
+    }
+    
+    echo json_encode(['success' => true, 'streams' => $streams]);
+    
+    $conn->close();
+    ?>
+    */
+  </script>
+</body>
+</html>
